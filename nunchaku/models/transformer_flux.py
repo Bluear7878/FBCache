@@ -11,24 +11,78 @@ from torch import nn
 from .utils import NunchakuModelLoaderMixin, pad_tensor
 from .._C import QuantizedFluxModel, utils as cutils
 from ..utils import fetch_or_download
+from .FB_cache import *
 
 SVD_RANK = 32
+num_transformer_blocks = 19
+num_single_transformer_blocks = 38
 
 
 class NunchakuFluxTransformerBlocks(nn.Module):
-    def __init__(self, m: QuantizedFluxModel, device: str | torch.device):
-        super(NunchakuFluxTransformerBlocks, self).__init__()
+    def __init__(
+        self,
+        m,
+        device: str | torch.device,
+        residual_diff_threshold: float = 0.06,
+        return_hidden_states_first: bool = False,
+        return_hidden_states_only: bool = False,
+    ):
+        super().__init__()
         self.m = m
         self.dtype = torch.bfloat16
         self.device = device
+        self.residual_diff_threshold = residual_diff_threshold
+        self.return_hidden_states_first = return_hidden_states_first
+        self.return_hidden_states_only = return_hidden_states_only
+
+    def call_remaining_transformer_blocks(
+        self,
+        hidden_states: torch.Tensor,
+        encoder_hidden_states: torch.Tensor,
+        temb: torch.Tensor,
+        rotary_emb_img: torch.Tensor,
+        rotary_emb_txt: torch.Tensor,
+        rotary_emb_single: torch.Tensor,
+    ):
+        original_hidden_states = hidden_states.clone()  # for final residual
+        original_encoder_hidden_states = encoder_hidden_states.clone()
+
+        for idx in range(1, num_transformer_blocks):
+            updated_h, updated_enc = self.m.forward_layer(
+                idx,
+                hidden_states,
+                encoder_hidden_states,
+                temb,
+                rotary_emb_img,   # image portion
+                rotary_emb_txt,   # text portion
+            )
+            hidden_states = updated_h
+            encoder_hidden_states = updated_enc
+
+        cat_hidden_states = torch.cat([encoder_hidden_states, hidden_states], dim=1)
+        for idx in range(num_single_transformer_blocks):
+            cat_hidden_states = self.m.forward_single_layer(
+                idx,
+                cat_hidden_states,
+                temb,
+                rotary_emb_single,
+            )
+
+        final_encoder_hidden_states = cat_hidden_states[:, : encoder_hidden_states.shape[1], ...]
+        final_hidden_states = cat_hidden_states[:, encoder_hidden_states.shape[1] :, ...]
+
+        hidden_states_residual = final_hidden_states - original_hidden_states
+        encoder_hidden_states_residual = final_encoder_hidden_states - original_encoder_hidden_states
+
+        return final_hidden_states, final_encoder_hidden_states, hidden_states_residual, encoder_hidden_states_residual
 
     def forward(
         self,
         /,
-        hidden_states: torch.Tensor,
-        temb: torch.Tensor,
-        encoder_hidden_states: torch.Tensor,
-        image_rotary_emb: torch.Tensor,
+        hidden_states: torch.Tensor,      # [batch, img_tokens, dim]
+        temb: torch.Tensor,               # [batch, dim]
+        encoder_hidden_states: torch.Tensor,  # [batch, txt_tokens, dim]
+        image_rotary_emb: torch.Tensor,   # shape [1, 1, batch*(txt+img), head_dim/2, 1, 2]
         joint_attention_kwargs=None,
     ):
         batch_size = hidden_states.shape[0]
@@ -43,30 +97,114 @@ class NunchakuFluxTransformerBlocks(nn.Module):
         temb = temb.to(self.dtype).to(self.device)
         image_rotary_emb = image_rotary_emb.to(self.device)
 
+        # Prepare rotary embeddings
         assert image_rotary_emb.ndim == 6
         assert image_rotary_emb.shape[0] == 1
         assert image_rotary_emb.shape[1] == 1
         assert image_rotary_emb.shape[2] == batch_size * (txt_tokens + img_tokens)
-        # [bs, tokens, head_dim / 2, 1, 2] (sincos)
-        image_rotary_emb = image_rotary_emb.reshape([batch_size, txt_tokens + img_tokens, *image_rotary_emb.shape[3:]])
-        rotary_emb_txt = image_rotary_emb[:, :txt_tokens, ...]  # .to(self.dtype)
-        rotary_emb_img = image_rotary_emb[:, txt_tokens:, ...]  # .to(self.dtype)
-        rotary_emb_single = image_rotary_emb  # .to(self.dtype)
 
-        rotary_emb_txt = pad_tensor(rotary_emb_txt, 256, 1)
-        rotary_emb_img = pad_tensor(rotary_emb_img, 256, 1)
-        rotary_emb_single = pad_tensor(rotary_emb_single, 256, 1)
-
-        hidden_states = self.m.forward(
-            hidden_states, encoder_hidden_states, temb, rotary_emb_img, rotary_emb_txt, rotary_emb_single
+        image_rotary_emb = image_rotary_emb.reshape(
+            [batch_size, (txt_tokens + img_tokens)] + list(image_rotary_emb.shape[3:])
         )
 
+        rotary_emb_txt = image_rotary_emb[:, :txt_tokens, ...]
+        rotary_emb_img = image_rotary_emb[:, txt_tokens:, ...]
+        rotary_emb_single = image_rotary_emb  # entire sequence
+
+        rotary_emb_txt = pad_tensor(rotary_emb_txt, 256, dim=1)
+        rotary_emb_img = pad_tensor(rotary_emb_img, 256, dim=1)
+        rotary_emb_single = pad_tensor(rotary_emb_single, 256, dim=1)
+
+        if self.residual_diff_threshold <= 0.0:
+            for idx in range(num_transformer_blocks):
+                updated_h, updated_enc = self.m.forward_layer(
+                    idx,
+                    hidden_states,
+                    encoder_hidden_states,
+                    temb,
+                    rotary_emb_img,
+                    rotary_emb_txt,
+                )
+                hidden_states = updated_h
+                encoder_hidden_states = updated_enc
+
+            cat_hidden_states = torch.cat([encoder_hidden_states, hidden_states], dim=1)
+            for idx in range(num_single_transformer_blocks):
+                cat_hidden_states = self.m.forward_single_layer(
+                    idx,
+                    cat_hidden_states,
+                    temb,
+                    rotary_emb_single,
+                )
+
+            encoder_hidden_states = cat_hidden_states[:, :txt_tokens, ...]
+            hidden_states = cat_hidden_states[:, txt_tokens:, ...]
+
+        else:
+            original_hidden_states = hidden_states
+
+            first_updated_h, first_updated_enc = self.m.forward_layer(
+                0,
+                hidden_states,
+                encoder_hidden_states,
+                temb,
+                rotary_emb_img,
+                rotary_emb_txt,
+            )
+
+            hidden_states = first_updated_h
+            encoder_hidden_states = first_updated_enc
+
+            first_hidden_states_residual = hidden_states - original_hidden_states
+            del original_hidden_states
+
+            parallelized = False 
+            can_use_cache = get_can_use_cache(
+                first_hidden_states_residual,
+                threshold=self.residual_diff_threshold,
+                parallelized=parallelized
+            )
+
+            torch._dynamo.graph_break()
+
+            if can_use_cache:
+                del first_hidden_states_residual
+                hidden_states, encoder_hidden_states = apply_prev_hidden_states_residual(
+                    hidden_states, encoder_hidden_states
+                )
+            else:
+                set_buffer("first_hidden_states_residual", first_hidden_states_residual)
+                del first_hidden_states_residual
+
+                (
+                    hidden_states,
+                    encoder_hidden_states,
+                    hidden_states_residual,
+                    encoder_hidden_states_residual,
+                ) = self.call_remaining_transformer_blocks(
+                    hidden_states,
+                    encoder_hidden_states,
+                    temb,
+                    rotary_emb_img,
+                    rotary_emb_txt,
+                    rotary_emb_single,
+                )
+
+                set_buffer("hidden_states_residual", hidden_states_residual)
+                set_buffer("encoder_hidden_states_residual", encoder_hidden_states_residual)
+
+            torch._dynamo.graph_break()
+
+        encoder_hidden_states = encoder_hidden_states.to(original_dtype).to(original_device)
         hidden_states = hidden_states.to(original_dtype).to(original_device)
 
-        encoder_hidden_states = hidden_states[:, :txt_tokens, ...]
-        hidden_states = hidden_states[:, txt_tokens:, ...]
-
-        return encoder_hidden_states, hidden_states
+        if self.return_hidden_states_only:
+            return hidden_states
+        else:
+            if self.return_hidden_states_first:
+                return (hidden_states, encoder_hidden_states)
+            else:
+                return (encoder_hidden_states, hidden_states)
 
 
 ## copied from diffusers 0.30.3
@@ -155,9 +293,11 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         precision = kwargs.get("precision", "int4")
         assert precision in ["int4", "fp4"]
         transformer, transformer_block_path = cls._build_model(pretrained_model_name_or_path, **kwargs)
+        
         m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4")
         transformer.inject_quantized_module(m, device)
-        return transformer
+        return transformer, m
+
 
     def update_lora_params(self, path: str):
         path = fetch_or_download(path)
@@ -178,3 +318,26 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
         self.single_transformer_blocks = nn.ModuleList([])
 
         return self
+    
+    def set_residual_diff_threshold(self, threshold: float):
+        """
+        Sets the residual_diff_threshold on all NunchakuFluxTransformerBlocks in this model.
+        """
+        for block in self.transformer_blocks:
+            if isinstance(block, NunchakuFluxTransformerBlocks):
+                block.residual_diff_threshold = threshold
+
+        for block in self.single_transformer_blocks:
+            if isinstance(block, NunchakuFluxTransformerBlocks):
+                block.residual_diff_threshold = threshold
+
+    def get_residual_diff_threshold(self) -> float:
+        """
+        Returns the residual_diff_threshold used by the first NunchakuFluxTransformerBlocks,
+        or 0.0 if none found.
+        """
+        for block in self.transformer_blocks:
+            if isinstance(block, NunchakuFluxTransformerBlocks):
+                return block.residual_diff_threshold
+
+        return 0.0
