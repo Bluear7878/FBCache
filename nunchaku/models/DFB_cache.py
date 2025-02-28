@@ -5,6 +5,8 @@ import dataclasses
 from collections import defaultdict
 from typing import Any, Dict, DefaultDict, Optional, Tuple, Union
 
+VERBOSE_SIMILARITY = False
+
 @dataclasses.dataclass
 class CacheContext:
     buffers: Dict[str, torch.Tensor] = dataclasses.field(default_factory=dict)
@@ -62,7 +64,8 @@ class MyCacheContext:
 
     def set_buffer(self, name, val):
         self._buffers[name] = val
-        
+
+
 from contextlib import contextmanager
 @contextmanager
 def FBTransformerCacheContext():
@@ -88,12 +91,83 @@ def set_buffer(name, buffer):
 
 @torch.compiler.disable
 def are_two_tensors_similar(t1, t2, *, threshold, parallelized=False):
+    global VERBOSE_SIMILARITY
+
     mean_diff = (t1 - t2).abs().mean()
     mean_t1 = t1.abs().mean()
     if parallelized:
-        pass  # e.g. distributed all-reduce
+        pass
     diff = mean_diff / (mean_t1 + 1e-6)
+
+    if VERBOSE_SIMILARITY:
+        print(f"[are_two_tensors_similar] mean_diff={mean_diff.item():.6f}, "
+              f"mean_t1={mean_t1.item():.6f}, diff={diff.item():.6f}, threshold={threshold:.3f}")
+
     return diff.item() < threshold
+
+
+@torch.compiler.disable
+def get_can_use_cache_multi(first_residual: torch.Tensor, threshold: float, parallelized=False):
+    prev_first = get_buffer("first_hidden_states_residual_multi")
+    can_use_cache = (
+        (prev_first is not None)
+        and are_two_tensors_similar(
+            prev_first,
+            first_residual,
+            threshold=threshold,
+            parallelized=parallelized,
+        )
+    )
+    return can_use_cache
+
+@torch.compiler.disable
+def apply_prev_hidden_states_residual_multi(hidden_states, encoder_hidden_states):
+    hs_res = get_buffer("hidden_states_residual_multi")
+    enc_res = get_buffer("encoder_hidden_states_residual_multi")
+    assert hs_res is not None, "hidden_states_residual_multi must be set before"
+    assert enc_res is not None, "encoder_hidden_states_residual_multi must be set before"
+
+    hidden_states = hidden_states + hs_res
+    encoder_hidden_states = encoder_hidden_states + enc_res
+
+    return hidden_states.contiguous(), encoder_hidden_states.contiguous()
+
+@torch.compiler.disable
+def get_can_use_cache_single(first_cat_residual: torch.Tensor, threshold: float, parallelized=False):
+    prev_first = get_buffer("first_cat_hidden_states_residual_single")
+    can_use_cache = (
+        (prev_first is not None)
+        and are_two_tensors_similar(
+            prev_first,
+            first_cat_residual,
+            threshold=threshold,
+            parallelized=parallelized,
+        )
+    )
+    return can_use_cache
+
+@torch.compiler.disable
+def apply_prev_cat_hidden_states_residual_single(cat_hidden_states):
+    cat_res = get_buffer("cat_hidden_states_residual_single")
+    assert cat_res is not None, "cat_hidden_states_residual_single must be set before"
+
+    cat_hidden_states = cat_hidden_states + cat_res
+    return cat_hidden_states.contiguous()
+
+
+@torch.compiler.disable
+def get_can_use_cache(first_hidden_states_residual, threshold, parallelized=False):
+    prev_first_hidden_states_residual = get_buffer("first_hidden_states_residual")
+    can_use_cache = (
+        (prev_first_hidden_states_residual is not None)
+        and are_two_tensors_similar(
+            prev_first_hidden_states_residual,
+            first_hidden_states_residual,
+            threshold=threshold,
+            parallelized=parallelized,
+        )
+    )
+    return can_use_cache
 
 @torch.compiler.disable
 def apply_prev_hidden_states_residual(hidden_states, encoder_hidden_states):
@@ -109,16 +183,3 @@ def apply_prev_hidden_states_residual(hidden_states, encoder_hidden_states):
     encoder_hidden_states = encoder_hidden_states.contiguous()
     return hidden_states, encoder_hidden_states
 
-@torch.compiler.disable
-def get_can_use_cache(first_hidden_states_residual, threshold, parallelized=False):
-    prev_first_hidden_states_residual = get_buffer("first_hidden_states_residual")
-    can_use_cache = (
-        (prev_first_hidden_states_residual is not None)
-        and are_two_tensors_similar(
-            prev_first_hidden_states_residual,
-            first_hidden_states_residual,
-            threshold=threshold,
-            parallelized=parallelized,
-        )
-    )
-    return can_use_cache
