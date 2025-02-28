@@ -29,64 +29,64 @@ Below are the images generated for each threshold during the **first** and **sec
 
 ### Threshold = 0
 **First**  
-![flux_t0_first.png](fb_cache_results/flux_t0_first.png)  
+![flux_t0_first.png](./results/fb_cache_results/flux_t0_first.png)  
 
 **Second**  
-![flux_t0_second.png](fb_cache_results/flux_t0_second.png)
+![flux_t0_second.png](./resultsfb_cache_results/flux_t0_second.png)
 
 ---
 
 ### Threshold = 0.01
 **First**  
-![flux_t0.01_first.png](fb_cache_results/flux_t0.01_first.png)
+![flux_t0.01_first.png](./resultsfb_cache_results/flux_t0.01_first.png)
 
 **Second**  
-![flux_t0.01_second.png](fb_cache_results/flux_t0.01_second.png)
+![flux_t0.01_second.png](./resultsfb_cache_results/flux_t0.01_second.png)
 
 ---
 
 ### Threshold = 0.05
 **First**  
-![flux_t0.05_first.png](fb_cache_results/flux_t0.05_first.png)
+![flux_t0.05_first.png](./resultsfb_cache_results/flux_t0.05_first.png)
 
 **Second**  
-![flux_t0.05_second.png](fb_cache_results/flux_t0.05_second.png)
+![flux_t0.05_second.png](./resultsfb_cache_results/flux_t0.05_second.png)
 
 ---
 
 ### Threshold = 0.1
 **First**  
-![flux_t0.1_first.png](fb_cache_results/flux_t0.1_first.png)
+![flux_t0.1_first.png](./resultsfb_cache_results/flux_t0.1_first.png)
 
 **Second**  
-![flux_t0.1_second.png](fb_cache_results/flux_t0.1_second.png)
+![flux_t0.1_second.png](./resultsfb_cache_results/flux_t0.1_second.png)
 
 ---
 
 ### Threshold = 0.2
 **First**  
-![flux_t0.2_first.png](fb_cache_results/flux_t0.2_first.png)
+![flux_t0.2_first.png](./resultsfb_cache_results/flux_t0.2_first.png)
 
 **Second**  
-![flux_t0.2_second.png](fb_cache_results/flux_t0.2_second.png)
+![flux_t0.2_second.png](./resultsfb_cache_results/flux_t0.2_second.png)
 
 ---
 
 ### Threshold = 0.5
 **First**  
-![flux_t0.5_first.png](fb_cache_results/flux_t0.5_first.png)
+![flux_t0.5_first.png](./resultsfb_cache_results/flux_t0.5_first.png)
 
 **Second**  
-![flux_t0.5_second.png](fb_cache_results/flux_t0.5_second.png)
+![flux_t0.5_second.png](./resultsfb_cache_results/flux_t0.5_second.png)
 
 ---
 
 ### Threshold = 0.8
 **First**  
-![flux_t0.8_first.png](fb_cache_results/flux_t0.8_first.png)
+![flux_t0.8_first.png](./resultsfb_cache_results/flux_t0.8_first.png)
 
 **Second**  
-![flux_t0.8_second.png](fb_cache_results/flux_t0.8_second.png)
+![flux_t0.8_second.png](./resultsfb_cache_results/flux_t0.8_second.png)
 
 ---
 
