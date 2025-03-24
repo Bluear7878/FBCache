@@ -12,6 +12,7 @@ from .utils import NunchakuModelLoaderMixin, pad_tensor
 from .._C import QuantizedFluxModel, utils as cutils
 from ..utils import fetch_or_download
 from .DFB_cache import *
+import matplotlib.pyplot as plt
 
 SVD_RANK = 32
 num_transformer_blocks = 19
@@ -24,8 +25,10 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
         device: str | torch.device,
         residual_diff_threshold_multi: float = 0.06,
         residual_diff_threshold_single: float = 0.06,
+        adaptive_th: float = 0.99,
         return_hidden_states_first: bool = False,
         return_hidden_states_only: bool = False,
+        VERBOSE_Threshold: bool = False, 
     ):
         super().__init__()
         self.m = m
@@ -35,6 +38,13 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
         self.residual_diff_threshold_single = residual_diff_threshold_single
         self.return_hidden_states_first = return_hidden_states_first
         self.return_hidden_states_only = return_hidden_states_only
+        self.adaptive_th = adaptive_th
+        
+        self.VERBOSE_Threshold = VERBOSE_Threshold
+        self.threshold_multi_history = []
+        self.residual_diff_threshold_multi_history = []
+        self.threshold_single_history = []
+        self.residual_diff_threshold_single_history = []
 
     def call_remaining_multi_transformer_blocks(
         self,
@@ -163,20 +173,25 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
             parallelized = False
             can_use_cache_multi = False
             if self.residual_diff_threshold_multi > 0:
-                can_use_cache_multi = get_can_use_cache_multi(
+                can_use_cache_multi,threshold_multi = get_can_use_cache_multi(
                     first_residual_multi,
                     threshold=self.residual_diff_threshold_multi,
                     parallelized=parallelized,
                 )
+            if self.VERBOSE_Threshold:
+                self.threshold_multi_history.append(threshold_multi)
+                self.residual_diff_threshold_multi_history.append(self.residual_diff_threshold_multi)
 
             torch._dynamo.graph_break()
 
             if can_use_cache_multi:
+                self.residual_diff_threshold_multi = self.residual_diff_threshold_multi*self.adaptive_th
                 del first_residual_multi
                 hidden_states, encoder_hidden_states = apply_prev_hidden_states_residual_multi(
                     hidden_states, encoder_hidden_states
                 )
             else:
+                self.residual_diff_threshold_multi = threshold_multi
                 set_buffer("first_hidden_states_residual_multi", first_residual_multi)
                 del first_residual_multi
 
@@ -211,18 +226,23 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
 
             can_use_cache_singles = False
             if self.residual_diff_threshold_single > 0:
-                can_use_cache_singles = get_can_use_cache_single(
+                can_use_cache_singles, threshold_single = get_can_use_cache_single(
                     first_cat_hidden_states_residual_single,
                     threshold=self.residual_diff_threshold_single,
                     parallelized=parallelized,
                 )
 
             torch._dynamo.graph_break()
+            if self.VERBOSE_Threshold:
+                self.threshold_single_history.append(threshold_single)
+                self.residual_diff_threshold_single_history.append(self.residual_diff_threshold_single)
 
             if can_use_cache_singles:
+                self.residual_diff_threshold_single = self.residual_diff_threshold_single * self.adaptive_th
                 del first_cat_hidden_states_residual_single
                 cat_hidden_states = apply_prev_cat_hidden_states_residual_single(cat_hidden_states)
             else:
+                self.residual_diff_threshold_single = threshold_single
                 set_buffer("first_cat_hidden_states_residual_single", first_cat_hidden_states_residual_single)
                 del first_cat_hidden_states_residual_single
 
@@ -250,6 +270,41 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
                 return (final_hidden_states, final_encoder_hidden_states)
             else:
                 return (final_encoder_hidden_states, final_hidden_states)
+        
+    def plot_thresholds(self, save_path: str = None):
+
+
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+
+        axs[0].plot(self.threshold_multi_history, label="threshold_multi")
+        axs[0].plot(self.residual_diff_threshold_multi_history, label="residual_diff_threshold_multi")
+        axs[0].set_title("Multi Threshold Tracking")
+        axs[0].set_xlabel("Iteration")
+        axs[0].set_ylabel("Threshold Value")
+        axs[0].legend()
+
+        axs[1].plot(self.threshold_single_history, label="threshold_single")
+        axs[1].plot(self.residual_diff_threshold_single_history, label="residual_diff_threshold_single")
+        axs[1].set_title("Single Threshold Tracking")
+        axs[1].set_xlabel("Iteration")
+        axs[1].set_ylabel("Threshold Value")
+        axs[1].legend()
+
+        plt.tight_layout()
+
+        if save_path:
+            safe_save_fig(fig, save_path)
+            print(f" * Threshold save: {save_path}")
+        else:
+            plt.show()
+
+        plt.close(fig)
+
+    def reset_threshold_logs(self):
+        self.threshold_multi_history.clear()
+        self.residual_diff_threshold_multi_history.clear()
+        self.threshold_single_history.clear()
+        self.residual_diff_threshold_single_history.clear()
 
 
 def rope(pos: torch.Tensor, dim: int, theta: int) -> torch.Tensor:
@@ -327,13 +382,17 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
             guidance_embeds=guidance_embeds,
             axes_dims_rope=axes_dims_rope,
         )
+        self.VERBOSE_Threshold = True
+        self.adaptive_th = 0.99
 
     @classmethod
     @utils.validate_hf_hub_args
-    def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path: str | os.PathLike, 
+                        **kwargs):
         device = kwargs.get("device", "cuda")
         precision = kwargs.get("precision", "int4")
         assert precision in ["int4", "fp4"]
+        
         transformer, transformer_block_path = cls._build_model(pretrained_model_name_or_path, **kwargs)
         
         m = load_quantized_module(transformer_block_path, device=device, use_fp4=precision == "fp4")
@@ -355,7 +414,9 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
     def inject_quantized_module(self, m: QuantizedFluxModel, device: str | torch.device = "cuda"):
         self.pos_embed = EmbedND(dim=self.inner_dim, theta=10000, axes_dim=[16, 56, 56])
 
-        self.transformer_blocks = nn.ModuleList([NunchakuFluxTransformerBlocks(m, device)])
+        self.transformer_blocks = nn.ModuleList([NunchakuFluxTransformerBlocks(m, device,
+                                                                               adaptive_th = self.adaptive_th,
+                                                                               VERBOSE_Threshold=self.VERBOSE_Threshold)])
         self.single_transformer_blocks = nn.ModuleList([])
 
         return self
@@ -373,3 +434,20 @@ class NunchakuFluxTransformer2dModel(FluxTransformer2DModel, NunchakuModelLoader
                 return block.residual_diff_threshold
 
         return 0.0
+    
+def safe_save_fig(fig, save_path: str):
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    _, ext = os.path.splitext(save_path)
+    
+    fd, temp_path = tempfile.mkstemp(suffix=ext, dir=os.path.dirname(save_path))
+    os.close(fd)  
+    try:
+        fig.savefig(temp_path)
+        os.replace(temp_path, save_path) 
+        print(f"Figure saved successfully at: {save_path}")
+    except Exception as e:
+        print(f"Error saving figure at {save_path}: {e}")
+        if os.path.exists(temp_path):
+            os.remove(temp_path)

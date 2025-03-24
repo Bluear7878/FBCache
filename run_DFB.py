@@ -1,3 +1,7 @@
+#env : nunchaku
+#python3 run_DFB.py
+
+
 import torch
 from diffusers import FluxPipeline
 import os
@@ -13,6 +17,7 @@ device = torch.device("cuda:0")
 
 
 transformer,m = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
+
 
 pipeline = FluxPipeline.from_pretrained(
     "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16

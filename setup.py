@@ -148,6 +148,7 @@ if __name__ == "__main__":
             *ncond(
                 "third_party/Block-Sparse-Attention/csrc/block_sparse_attn/src/flash_fwd_block_hdim128_bf16_sm80.cu"
             ),
+            
             "src/kernels/activation_kernels.cu",
             "src/kernels/layernorm_kernels.cu",
             "src/kernels/misc_kernels.cu",

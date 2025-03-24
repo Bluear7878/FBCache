@@ -10,7 +10,7 @@
 class QuantizedFluxModel : public ModuleWrapper<FluxModel> { // : public torch::CustomClassHolder {
 public:
     void init(bool use_fp4, bool bf16, int8_t deviceId) {
-        spdlog::info("Initializing QuantizedFluxModel");
+        spdlog::info("Initializing QuantizedFluxModel!!!!!!!!!");
         net = std::make_unique<FluxModel>(use_fp4, bf16 ? Tensor::BF16 : Tensor::FP16, Device::cuda((int)deviceId));
     }
 
@@ -57,6 +57,7 @@ public:
         torch::Tensor rotary_emb_context)
     {
         spdlog::debug("QuantizedFluxModel forward_layer {}", idx);
+
 
         hidden_states = hidden_states.contiguous();
         encoder_hidden_states = encoder_hidden_states.contiguous();

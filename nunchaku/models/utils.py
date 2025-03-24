@@ -4,7 +4,7 @@ import torch
 from diffusers import __version__
 from huggingface_hub import constants, hf_hub_download
 from safetensors.torch import load_file
-
+import tempfile
 
 class NunchakuModelLoaderMixin:
     @classmethod
