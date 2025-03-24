@@ -1,5 +1,5 @@
-|Navie FB cache  (3.7ms)                                                                                  |Double FB cache (4.2ms)                                                                                                   |Ours (Adaptive Threshold + Declay)(4.58ms)
-|<img src="./results/Dfb_cache_results_sing_fix_multi_var/flux_t100.0_second.png" width="140">             | <img src="./results/Dfb_cache_results_single_fixed/flux_t80.0_second.png" width="140">                                  |<img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_first.png" width="400">|
+|Navie FB cache  (3.7ms)                                                                                  |Double FB cache (4.2ms)                                                                                                   |Ours (Adaptive Threshold + Declay)(4.58ms) |
+|<img src="./results/Dfb_cache_results_sing_fix_multi_var/flux_t100.0_second.png" width="140">             | <img src="./results/Dfb_cache_results_single_fixed/flux_t80.0_second.png" width="140">                                  |<img src="./results/th0.99 _adath_458ms/flux_t10.0_first.png"width="400">|
 
 
 
