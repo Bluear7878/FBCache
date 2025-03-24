@@ -61,11 +61,49 @@ flux_t10.0_first.png  flux_t10.0_second.png  flux_t10_threshold_graph_first.png 
 
 Below is a comparison table highlighting key files (images, graphs) in each folder.
 
-| Folder Name            | Threshold Graph (First)                                                                | Threshold Graph (Second)                                                               | Result Image (First)                                                                | Result Image (Second)                                                               | Inference Time (ms) |
-|------------------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|---------------------|
-| **noth_adath_418ms**   | <img src="./results/noth_adath_418ms/flux_t10_threshold_graph_first.png" width="140">  | <img src="./results/noth_adath_418ms/flux_t10_threshold_graph_second.png" width="140">  | <img src="./results/noth_adath_418ms/flux_t10.0_first.png" width="140">             | <img src="./results/noth_adath_418ms/flux_t10.0_second.png" width="140">            | 4.18               |
-| **noth_th10_1286ms**   | <img src="./results/noth_th10_1286ms/flux_t10_threshold_graph_first.png" width="140">   | <img src="./results/noth_th10_1286ms/flux_t10_threshold_graph_second.png" width="140">   | <img src="./results/noth_th10_1286ms/flux_t10.0_first.png" width="140">             | <img src="./results/noth_th10_1286ms/flux_t10.0_second.png" width="140">            | 12.86              |
-| **th0.9_adath_783ms**  | <img src="./results/th0.9 _adath_783ms/flux_t10_threshold_graph_first.png" width="140"> | <img src="./results/th0.9 _adath_783ms/flux_t10_threshold_graph_second.png" width="140"> | <img src="./results/th0.9 _adath_783ms/flux_t10.0_first.png" width="140">         | <img src="./results/th0.9 _adath_783ms/flux_t10.0_second.png" width="140">        | 7.83               |
-| **th0.95_adath_641ms** | <img src="./results/th0.95 _adath_641ms/flux_t10_threshold_graph_first.png" width="140">| <img src="./results/th0.95 _adath_641ms/flux_t10_threshold_graph_second.png" width="140">| <img src="./results/th0.95 _adath_641ms/flux_t10.0_first.png" width="140">        | <img src="./results/th0.95 _adath_641ms/flux_t10.0_second.png" width="140">       | 6.41               |
-| **th0.99_adath_458ms** | <img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_first.png" width="140">| <img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_second.png" width="140">| <img src="./results/th0.99 _adath_458ms/flux_t10.0_first.png" width="140">        | <img src="./results/th0.99 _adath_458ms/flux_t10.0_second.png" width="140">       | 4.58               |
+## Larger Graphs and Result Images
+
+### 1) **noth_adath_418ms** (4.18 ms)
+
+| Folder / Inference Time              | Graph 1 (Large)                                                                   | Graph 2 (Large)                                                                   |
+|--------------------------------------|------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| **noth_adath_418ms** (4.18 ms)       | <img src="./results/noth_adath_418ms/flux_t10_threshold_graph_first.png" width="300">  | <img src="./results/noth_adath_418ms/flux_t10_threshold_graph_second.png" width="300"> |
+| **Result Images**                    | <img src="./results/noth_adath_418ms/flux_t10.0_first.png" width="140">               | <img src="./results/noth_adath_418ms/flux_t10.0_second.png" width="140">              |
+
+---
+
+### 2) **noth_th10_1286ms** (12.86 ms)
+
+| Folder / Inference Time              | Graph 1 (Large)                                                                      | Graph 2 (Large)                                                                      |
+|--------------------------------------|---------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| **noth_th10_1286ms** (12.86 ms)      | <img src="./results/noth_th10_1286ms/flux_t10_threshold_graph_first.png" width="300"> | <img src="./results/noth_th10_1286ms/flux_t10_threshold_graph_second.png" width="300">|
+| **Result Images**                    | <img src="./results/noth_th10_1286ms/flux_t10.0_first.png" width="140">               | <img src="./results/noth_th10_1286ms/flux_t10.0_second.png" width="140">              |
+
+---
+
+### 3) **th0.9_adath_783ms** (7.83 ms)
+
+| Folder / Inference Time              | Graph 1 (Large)                                                                         | Graph 2 (Large)                                                                         |
+|--------------------------------------|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| **th0.9_adath_783ms** (7.83 ms)      | <img src="./results/th0.9 _adath_783ms/flux_t10_threshold_graph_first.png" width="300">  | <img src="./results/th0.9 _adath_783ms/flux_t10_threshold_graph_second.png" width="300"> |
+| **Result Images**                    | <img src="./results/th0.9 _adath_783ms/flux_t10.0_first.png" width="140">               | <img src="./results/th0.9 _adath_783ms/flux_t10.0_second.png" width="140">              |
+
+---
+
+### 4) **th0.95_adath_641ms** (6.41 ms)
+
+| Folder / Inference Time              | Graph 1 (Large)                                                                          | Graph 2 (Large)                                                                          |
+|--------------------------------------|-------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| **th0.95_adath_641ms** (6.41 ms)     | <img src="./results/th0.95 _adath_641ms/flux_t10_threshold_graph_first.png" width="300"> | <img src="./results/th0.95 _adath_641ms/flux_t10_threshold_graph_second.png" width="300"> |
+| **Result Images**                    | <img src="./results/th0.95 _adath_641ms/flux_t10.0_first.png" width="140">               | <img src="./results/th0.95 _adath_641ms/flux_t10.0_second.png" width="140">              |
+
+---
+
+### 5) **th0.99_adath_458ms** (4.58 ms)
+
+| Folder / Inference Time              | Graph 1 (Large)                                                                          | Graph 2 (Large)                                                                          |
+|--------------------------------------|-------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| **th0.99_adath_458ms** (4.58 ms)     | <img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_first.png" width="300"> | <img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_second.png" width="300"> |
+| **Result Images**                    | <img src="./results/th0.99 _adath_458ms/flux_t10.0_first.png" width="140">               | <img src="./results/th0.99 _adath_458ms/flux_t10.0_second.png" width="140">              |
+
 
