@@ -1,6 +1,6 @@
-| Navie FB cache (3.7ms)                                                                | Double FB cache (4.2ms)                                                                  | Ours (Adaptive Threshold + Declay)(4.58ms)                                                         |
+| Navie FB cache (3.7ms)                                                                | Double FB cache (4.2ms)                                                                  | Ours (Adaptive Threshold + Declay)(4.41ms)                                                         |
 |---------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| <img src="./results/Dfb_cache_results_sing_fix_multi_var/flux_t100.0_second.png" width="400"> | <img src="./results/Dfb_cache_results_single_fixed/flux_t80.0_second.png" width="400">    | <img src="./results/th0.99 _adath_458ms/flux_t10.0_first.png" width="400">                                                |
+| <img src="./results/Dfb_cache_results_sing_fix_multi_var/flux_t100.0_second.png" width="400"> | <img src="./results/Dfb_cache_results_single_fixed/flux_t80.0_second.png" width="400">    | <img src="./results/th0.99_adath_458ms/flux_t10.0_first.png" width="400">                                                |
 
 
 # FB Cache & Threshold Comparison
@@ -98,11 +98,11 @@ Below is a comparison table highlighting key files (images, graphs) in each fold
 
 | Graph (1)                                                   | Graph (2)                                                   |
 |-------------------------------------------------------------|-------------------------------------------------------------|
-| <img src="./results/th0.9 _adath_783ms/flux_t10_threshold_graph_first.png" width="400"> | <img src="./results/th0.9 _adath_783ms/flux_t10_threshold_graph_second.png" width="400"> |
+| <img src="./results/th0.9_adath_783ms/flux_t10_threshold_graph_first.png" width="400"> | <img src="./results/th0.9_adath_783ms/flux_t10_threshold_graph_second.png" width="400"> |
 
 | Result Image (1)                                           | Result Image (2)                                           |
 |------------------------------------------------------------|------------------------------------------------------------|
-| <img src="./results/th0.9 _adath_783ms/flux_t10.0_first.png" width="300">   | <img src="./results/th0.9 _adath_783ms/flux_t10.0_second.png" width="300">  |
+| <img src="./results/th0.9_adath_783ms/flux_t10.0_first.png" width="300">   | <img src="./results/th0.9_adath_783ms/flux_t10.0_second.png" width="300">  |
 
 ---
 
@@ -110,11 +110,11 @@ Below is a comparison table highlighting key files (images, graphs) in each fold
 
 | Graph (1)                                                   | Graph (2)                                                   |
 |-------------------------------------------------------------|-------------------------------------------------------------|
-| <img src="./results/th0.95 _adath_641ms/flux_t10_threshold_graph_first.png" width="400"> | <img src="./results/th0.95 _adath_641ms/flux_t10_threshold_graph_second.png" width="400"> |
+| <img src="./results/th0.95_adath_641ms/flux_t10_threshold_graph_first.png" width="400"> | <img src="./results/th0.95_adath_641ms/flux_t10_threshold_graph_second.png" width="400"> |
 
 | Result Image (1)                                           | Result Image (2)                                           |
 |------------------------------------------------------------|------------------------------------------------------------|
-| <img src="./results/th0.95 _adath_641ms/flux_t10.0_first.png" width="300">  | <img src="./results/th0.95 _adath_641ms/flux_t10.0_second.png" width="300"> |
+| <img src="./results/th0.95_adath_641ms/flux_t10.0_first.png" width="300">  | <img src="./results/th0.95_adath_641ms/flux_t10.0_second.png" width="300"> |
 
 ---
 
@@ -122,11 +122,11 @@ Below is a comparison table highlighting key files (images, graphs) in each fold
 
 | Graph (1)                                                   | Graph (2)                                                   |
 |-------------------------------------------------------------|-------------------------------------------------------------|
-| <img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_first.png" width="400"> | <img src="./results/th0.99 _adath_458ms/flux_t10_threshold_graph_second.png" width="400"> |
+| <img src="./results/th0.99_adath_458ms/flux_t10_threshold_graph_first.png" width="400"> | <img src="./results/th0.99_adath_458ms/flux_t10_threshold_graph_second.png" width="400"> |
 
 | Result Image (1)                                           | Result Image (2)                                           |
 |------------------------------------------------------------|------------------------------------------------------------|
-| <img src="./results/th0.99 _adath_458ms/flux_t10.0_first.png" width="300">  | <img src="./results/th0.99 _adath_458ms/flux_t10.0_second.png" width="300"> |
+| <img src="./results/th0.99_adath_458ms/flux_t10.0_first.png" width="300">  | <img src="./results/th0.99_adath_458ms/flux_t10.0_second.png" width="300"> |
 
 
 
