@@ -129,6 +129,8 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
         rotary_emb_img = pad_tensor(rotary_emb_img, 256, dim=1)
         rotary_emb_single = pad_tensor(rotary_emb_single, 256, dim=1)
         
+        context = get_current_cache_context()
+        
         if (self.residual_diff_threshold_multi <= 0.0) and (self.residual_diff_threshold_single <= 0.0):
             for idx in range(num_transformer_blocks):
                 updated_h, updated_enc = self.m.forward_layer(
@@ -192,7 +194,8 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
                 )
             else:
                 self.residual_diff_threshold_multi = threshold_multi
-                set_buffer("first_hidden_states_residual_multi", first_residual_multi)
+                #set_buffer("first_hidden_states_residual_multi", first_residual_multi)
+                context.first_hidden_states_residual_multi = first_residual_multi.clone()
                 del first_residual_multi
 
                 hidden_states, encoder_hidden_states, hs_res_multi, enc_res_multi = self.call_remaining_multi_transformer_blocks(
@@ -204,8 +207,10 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
                     rotary_emb_txt=rotary_emb_txt,
                 )
 
-                set_buffer("hidden_states_residual_multi", hs_res_multi)
-                set_buffer("encoder_hidden_states_residual_multi", enc_res_multi)
+                #set_buffer("hidden_states_residual_multi", hs_res_multi)
+                #set_buffer("encoder_hidden_states_residual_multi", enc_res_multi)
+                context.hidden_states_residual_multi = hs_res_multi.clone()
+                context.encoder_hidden_states_residual_multi = enc_res_multi.clone()
 
             torch._dynamo.graph_break()
 
@@ -243,7 +248,9 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
                 cat_hidden_states = apply_prev_cat_hidden_states_residual_single(cat_hidden_states)
             else:
                 self.residual_diff_threshold_single = threshold_single
-                set_buffer("first_cat_hidden_states_residual_single", first_cat_hidden_states_residual_single)
+                #set_buffer("first_cat_hidden_states_residual_single", first_cat_hidden_states_residual_single)
+                context.first_cat_hidden_states_residual_single = first_cat_hidden_states_residual_single.clone()
+                
                 del first_cat_hidden_states_residual_single
 
                 cat_hidden_states, cat_res_single = self.call_remaining_single_transformer_blocks(
@@ -252,7 +259,8 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
                     temb=temb,
                     rotary_emb_single=rotary_emb_single,
                 )
-                set_buffer("cat_hidden_states_residual_single", cat_res_single)
+                #set_buffer("cat_hidden_states_residual_single", cat_res_single)
+                context.cat_hidden_states_residual_single = cat_res_single.clone()
 
             torch._dynamo.graph_break()
 
@@ -270,7 +278,6 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
                 return (final_hidden_states, final_encoder_hidden_states)
             else:
                 return (final_encoder_hidden_states, final_hidden_states)
-        
     def plot_thresholds(self, save_path: str = None):
 
 

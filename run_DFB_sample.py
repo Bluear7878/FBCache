@@ -14,20 +14,19 @@ from nunchaku.models.DFB_cache import *
 
 device = torch.device("cuda:0")
 
-flux_model_path = "/home/ict04/Lighten_DL/LLM/cp/cp/svdq/models--mit-han-lab--svdq-int4-flux.1-dev/snapshots/3af964b97d298d4ed9da753edcc1ba3b322031f2"
-black_flux_model_path = "/home/ict04/Lighten_DL/LLM/cp/cp/black_forest/models--black-forest-labs--FLUX.1-dev/snapshots/0ef5fff789c832c5c7f4e127f94c8b54bbcced44"
+transformer,m = NunchakuFluxTransformer2dModel.from_pretrained("mit-han-lab/svdq-int4-flux.1-dev")
 
-transformer,m = NunchakuFluxTransformer2dModel.from_pretrained(flux_model_path)
 #transformer.transformer_blocks[0].m.load("/home/ict04/Lighten_DL/LLM/nunchaku_FB/nunchaku_loras/svdq-int4-flux.1-dev-ghibsky.safetensors", partial=True)
 
 pipeline = FluxPipeline.from_pretrained(
-    black_flux_model_path, transformer=transformer, torch_dtype=torch.bfloat16
+    "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to(device)
-
 
 pipeline2 = FluxPipeline.from_pretrained(
-    black_flux_model_path, transformer=transformer, torch_dtype=torch.bfloat16
+    "black-forest-labs/FLUX.1-dev", transformer=transformer, torch_dtype=torch.bfloat16
 ).to(device)
+
+
 # 4) Threshold test values
 threshold_values = [0.1] 
 fixed = 0.1
