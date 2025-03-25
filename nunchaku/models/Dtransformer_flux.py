@@ -188,15 +188,15 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
 
             if can_use_cache_multi:
                 self.residual_diff_threshold_multi = self.residual_diff_threshold_multi*self.adaptive_th
-                del first_residual_multi
+                #del first_residual_multi
                 hidden_states, encoder_hidden_states = apply_prev_hidden_states_residual_multi(
                     hidden_states, encoder_hidden_states
                 )
             else:
                 self.residual_diff_threshold_multi = threshold_multi
                 #set_buffer("first_hidden_states_residual_multi", first_residual_multi)
-                context.first_hidden_states_residual_multi = first_residual_multi.clone()
-                del first_residual_multi
+                context.first_hidden_states_residual_multi = first_residual_multi#.clone()
+                #del first_residual_multi
 
                 hidden_states, encoder_hidden_states, hs_res_multi, enc_res_multi = self.call_remaining_multi_transformer_blocks(
                     start_idx=1,
@@ -209,8 +209,8 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
 
                 #set_buffer("hidden_states_residual_multi", hs_res_multi)
                 #set_buffer("encoder_hidden_states_residual_multi", enc_res_multi)
-                context.hidden_states_residual_multi = hs_res_multi.clone()
-                context.encoder_hidden_states_residual_multi = enc_res_multi.clone()
+                context.hidden_states_residual_multi = hs_res_multi#.clone()
+                context.encoder_hidden_states_residual_multi = enc_res_multi#.clone()
 
             torch._dynamo.graph_break()
 
@@ -244,14 +244,14 @@ class NunchakuFluxTransformerBlocks(torch.nn.Module):
 
             if can_use_cache_singles:
                 self.residual_diff_threshold_single = self.residual_diff_threshold_single * self.adaptive_th
-                del first_cat_hidden_states_residual_single
+                #del first_cat_hidden_states_residual_single
                 cat_hidden_states = apply_prev_cat_hidden_states_residual_single(cat_hidden_states)
             else:
                 self.residual_diff_threshold_single = threshold_single
                 #set_buffer("first_cat_hidden_states_residual_single", first_cat_hidden_states_residual_single)
-                context.first_cat_hidden_states_residual_single = first_cat_hidden_states_residual_single.clone()
+                context.first_cat_hidden_states_residual_single = first_cat_hidden_states_residual_single#.clone()
                 
-                del first_cat_hidden_states_residual_single
+                #del first_cat_hidden_states_residual_single
 
                 cat_hidden_states, cat_res_single = self.call_remaining_single_transformer_blocks(
                     start_idx=1,

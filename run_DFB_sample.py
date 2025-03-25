@@ -59,7 +59,6 @@ for th in threshold_values:
         
         
         
-        
     with FBTransformerCacheContext() as fb_ctx:
         transformer.set_residual_diff_threshold(
         threshold_multi=fixed,
@@ -87,6 +86,5 @@ for th in threshold_values:
 
         
     safe_save(image_1,out_path_1)
-    time.sleep(5)
     safe_save(image_2,out_path_2)
     print(f" * Saved images at: {out_path_1}, {out_path_2}")

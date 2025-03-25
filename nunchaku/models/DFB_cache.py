@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import Any, Dict, DefaultDict, Optional, Tuple, Union
 import os
 import tempfile
+import time
 
 VERBOSE_SIMILARITY = True
 
@@ -210,6 +211,7 @@ def safe_save(image, path):
     try:
         image.save(temp_path)
         os.replace(temp_path, path)  # Atomic operation if on the same filesystem.
+        time.sleep(5)
         print(f"Image saved successfully at: {path}")
     except Exception as e:
         print(f"Error saving image at {path}: {e}")
@@ -233,6 +235,7 @@ def safe_save_fig(fig, save_path: str):
         fig.savefig(temp_path)
         os.replace(temp_path, save_path) 
         print(f"Figure saved successfully at: {save_path}")
+        time.sleep(5)
     except Exception as e:
         print(f"Error saving figure at {save_path}: {e}")
         if os.path.exists(temp_path):
