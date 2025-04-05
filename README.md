@@ -2,11 +2,11 @@
 |---------|------------------------------------------------------------|------------|
 | Batch 1 | ![Batch 1](results/batch_1/flux.1-dev.png)            | 27.7s    |
 | Batch 2 | ![Batch 2](results/batch_2/flux.1-dev.png)            | 55.0s    |
-| Batch 3 | ![Batch 3](results/batch_3/flux.1_dev.png)            | 1m.24s    |
+| Batch 3 | ![Batch 3](results/batch_3/flux.1-dev.png)            | 1m.24s    |
 
 
 
-## 3. Potential Overhead from Loop-Based Batch Processing
+##. Potential Overhead from Loop-Based Batch Processing
 
 In some parts of the code, you may see a pattern like:
 
